@@ -192,13 +192,20 @@ class DroneVisionDetector(Node):
     def photo_trigger_callback(self, msg: String):
         label = msg.data or "manual_capture"
         if self.latest_annotated_frame is not None:
-            filename = f"capture_{int(time.time())}_{label}.jpg"
+            ts = int(time.time())
+            filename = f"capture_{ts}_{label}.jpg"
             filepath = os.path.join(CAPTURES_DIR, filename)
             cv2.imwrite(filepath, self.latest_annotated_frame)
             self.get_logger().info(f"📸 Aerial Snapshot Saved: {filepath}")
-            # Also save latest.jpg for easy web viewing
+            # Overwrite latest.jpg AND publish a unique path so web GCS always
+            # detects a new capture even when the drone is at a different position.
             latest_path = os.path.join(CAPTURES_DIR, "latest.jpg")
             cv2.imwrite(latest_path, self.latest_annotated_frame)
+            # Publish the unique timestamped path as the capture signal
+            notify = String()
+            notify.data = f"/captures/latest.jpg?t={ts}"
+            self.perception_pub.publish(notify)
+            self.get_logger().info(f"📡 Capture signal published: {notify.data}")
 
 
 def main(args=None):

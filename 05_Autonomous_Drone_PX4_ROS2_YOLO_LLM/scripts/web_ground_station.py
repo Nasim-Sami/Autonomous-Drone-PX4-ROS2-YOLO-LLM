@@ -475,13 +475,20 @@ setInterval(async function() {
       }
     }
 
-    // Aerial Snapshot Display
+    // Aerial Snapshot Display — force cache-bust on every new capture
     if (data.latest_capture) {
       const snapPanel = document.getElementById('vision-panel');
       const snapImg = document.getElementById('snap-img');
       if (snapPanel && snapImg) {
         snapPanel.style.display = 'flex';
-        snapImg.src = data.latest_capture;
+        // Strip any old ?t= param then append a fresh timestamp so the browser
+        // never serves a cached frame after the drone moves to a new position.
+        const baseUrl = data.latest_capture.split('?')[0];
+        const bustedUrl = baseUrl + '?t=' + Date.now();
+        if (snapImg.dataset.lastCapture !== data.latest_capture) {
+          snapImg.dataset.lastCapture = data.latest_capture;
+          snapImg.src = bustedUrl;
+        }
       }
     }
   } catch(e) {}
