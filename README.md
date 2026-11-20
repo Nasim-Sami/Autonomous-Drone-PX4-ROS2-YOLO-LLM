@@ -13,7 +13,7 @@
 
 **A complete, production-grade autonomous quadcopter pipeline featuring Natural Language Mission Planning (English & Bengali), Physics-Based 3D Trajectory Gatekeeper, Real-time YOLOv8 Computer Vision Perception, and PX4 SITL Offboard Flight Control.**
 
-[Overview](#-overview) • [Architecture](#-architecture) • [Project Structure](#-project-structure) • [Quick Start](#-quick-start) • [Detailed Documentation](#-detailed-project-guide) • [Author](#-author)
+[Overview](#-overview) • [Architecture](#-architecture) • [Theory & Mathematics](#-mathematical-foundations--physics) • [Project Structure](#-project-structure) • [Quick Start](#-quick-start) • [Detailed Documentation](#-detailed-project-guide) • [Author](#-author)
 
 </div>
 
@@ -74,6 +74,22 @@ flowchart TD
 
 ---
 
+## 📐 Mathematical Foundations & Physics
+
+This repository is backed by rigorous mathematical, physical, and optical models governing perception, kinematics, and state estimation:
+
+* **[Theory Summary & Architecture Map](theory_and_mathematics/README.md)**: High-impact executive cheat-sheet with equation tables, symbols, and interactive 3D simulations.
+* **[Comprehensive Mathematical Foundations Guide](theory_and_mathematics/MATHEMATICAL_FOUNDATIONS.md)**: Textbook-grade step-by-step derivations:
+  - *Optical Physics*: Pinhole perspective geometry ($D = \frac{H \cdot f}{h}$), wave superposition of bosonic light rays, scale ambiguity resolution via YOLOv8 priors, and stereo triangulation ($D = \frac{f \cdot B}{d}$).
+  - *Spatial Kinematics*: Aerospace NED ↔ Robotics ENU frame transformations, body vs world vectors ($\mathbf{v}^W = R(q) \mathbf{v}^B$).
+  - *Rotational Mechanics*: Proof of Euler rate singularity ($\dot{\psi} = \frac{q \sin\phi + r \cos\phi}{\cos\theta} \to \pm\infty$), matrix collapse at $\theta = 90^\circ$, manipulator singularities, and 4D Hamilton Quaternions on $S^3$ ($p' = q p q^*$).
+  - *State Estimation (EKF2)*: 24-state sensor fusion, dimensional analysis of covariances ($P \in \text{m}^2, R \in \text{Pa}^2, H \in \text{Pa/m}$), Taylor Jacobian linearization, mathematical derivation of Kalman Gain $K = \frac{PH}{HPH + R}$ and covariance update $P_{\text{new}} = (1 - KH)P$, and why missing Gazebo plugins blocked takeoff.
+* **Interactive 3D WebGL Labs**:
+  - [Gimbal Lock & Quaternion 3D Lab](theory_and_mathematics/simulations/gimbal_lock_simulation.html)
+  - [Human Shoulder vs Robot Arm Singularity Lab](theory_and_mathematics/simulations/robot_arm_singularity_sim.html)
+
+---
+
 ## 📁 Project Structure
 
 ```text
@@ -81,6 +97,13 @@ Autonomous-Drone-PX4-ROS2-YOLO-LLM/
 ├── README.md                                          # Root repository overview & architecture
 ├── LICENSE                                            # MIT License
 ├── .gitignore                                         # Git ignore rules
+│
+├── theory_and_mathematics/                            # Rigorous Mathematics, Physics & Simulation Labs
+│   ├── README.md                                      # Executive summary & mathematical architecture map
+│   ├── MATHEMATICAL_FOUNDATIONS.md                    # Deep-dive derivations (Optics, Kinematics, EKF2, Quaternions)
+│   └── simulations/                                   # Standalone interactive 3D simulations
+│       ├── gimbal_lock_simulation.html                # 3-Ring Gimbal Lock vs 4D Quaternion Lab
+│       └── robot_arm_singularity_sim.html             # Human Ball-and-Socket vs 1-DOF Arm Singularity Lab
 │
 └── 05_Autonomous_Drone_PX4_ROS2_YOLO_LLM/             # Core Project Directory
     ├── README.md                                      # Comprehensive guide: installation, execution & troubleshooting
