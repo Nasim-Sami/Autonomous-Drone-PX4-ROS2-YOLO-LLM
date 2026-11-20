@@ -26,8 +26,8 @@ This document provides a comprehensive, graduate-level reference for the mathema
    - 4.2 [Error Covariances & Dimensional Analysis ($P, Q, R$)](#42-error-covariances--dimensional-analysis-p-q-r)
    - 4.3 [Linear vs Nonlinear Transformations on Gaussian Distributions](#43-linear-vs-nonlinear-transformations-on-gaussian-distributions)
    - 4.4 [First-Order Taylor Series & Jacobian Linearization](#44-first-order-taylor-series--jacobian-linearization)
-   - 4.5 [Derivation of the Kalman Gain ($K$)](#45-derivation-of-the-kalman-gain-k)
-   - 4.6 [Derivation of the Posterior Covariance Update ($P_{\text{new}}$)](#46-derivation-of-the-posterior-covariance-update-p_textnew)
+   - 4.5 [Optimal Kalman Gain ($K$)](#45-optimal-kalman-gain-k)
+   - 4.6 [Posterior Covariance Update ($P_{\text{new}}$)](#46-posterior-covariance-update-p_textnew)
    - 4.7 [Root-Cause Analysis: Why Missing Gazebo Plugins Blocked Takeoff](#47-root-cause-analysis-why-missing-gazebo-plugins-blocked-takeoff)
    - 4.8 [Clean Python Reference Implementation](#48-clean-python-reference-implementation)
 5. [Deterministic Safety & Autonomous Supervisory Control](#5-deterministic-safety--autonomous-supervisory-control)
@@ -362,7 +362,7 @@ Autonomous hovering requires accurate estimates of position $(x, y, z)$ and velo
 ## 4.2 Error Covariances & Dimensional Analysis ($P, Q, R$)
 
 In probabilistic estimation, uncertainty is parameterized as a covariance matrix representing expected squared error:
-$$\operatorname{Cov}(\mathbf{e}) = E[(\mathbf{e} - \mu)(\mathbf{e} - \mu)^T]$$
+$$\text{Cov}(\mathbf{e}) = E[(\mathbf{e} - \mu)(\mathbf{e} - \mu)^T]$$
 
 * **$P$ (State Error Covariance):** Represents the filter's internal uncertainty in state estimate $\hat{\mathbf{x}}$.
   - Altitude state variance $\sigma_z^2$ has units of **$\text{meters}^2$ ($\text{m}^2$)**.
@@ -400,45 +400,15 @@ $H$ has units of **$\frac{\text{Pascal}}{\text{meter}}$ ($\text{Pa/m}$)**, repre
 
 ---
 
-## 4.5 Derivation of the Kalman Gain ($K$)
+## 4.5 Optimal Kalman Gain ($K$)
 
-The state update equation is formulated as a linear correction:
-$$\hat{\mathbf{x}}_{\text{new}} = \hat{\mathbf{x}} + K (\mathbf{y} - h(\hat{\mathbf{x}}))$$
-We seek the optimal gain $K$ that minimizes the posterior Mean Squared Error $\operatorname{Tr}(P_{\text{new}})$.
-
-### Derivation:
-1. Define estimation error: $\mathbf{e}_{\text{new}} = \mathbf{x} - \hat{\mathbf{x}}_{\text{new}}$.
-2. Substitute measurement model $\mathbf{y} = H \mathbf{x} + \mathbf{v}$:
-   $$\mathbf{e}_{\text{new}} = \mathbf{x} - [\hat{\mathbf{x}} + K(H \mathbf{x} + \mathbf{v} - H \hat{\mathbf{x}})]$$
-   $$\mathbf{e}_{\text{new}} = (I - K H)(\mathbf{x} - \hat{\mathbf{x}}) - K \mathbf{v} = (I - K H) \mathbf{e} - K \mathbf{v}$$
-3. Compute posterior covariance $P_{\text{new}} = E[\mathbf{e}_{\text{new}} \mathbf{e}_{\text{new}}^T]$:
-   $$P_{\text{new}} = (I - K H) E[\mathbf{e} \mathbf{e}^T] (I - K H)^T + K E[\mathbf{v} \mathbf{v}^T] K^T$$
-   $$P_{\text{new}} = (I - K H) P (I - K H)^T + K R K^T$$
-   Expanding:
-   $$P_{\text{new}} = P - K H P - P H^T K^T + K (H P H^T + R) K^T$$
-4. Take the matrix derivative with respect to $K$ and set to zero:
-   $$\frac{\partial \operatorname{Tr}(P_{\text{new}})}{\partial K} = -2 (P H^T) + 2 K (H P H^T + R) = 0$$
-5. Solving for $K$:
-   $$K (H P H^T + R) = P H^T$$
-   $$K = P H^T (H P H^T + R)^{-1}$$
-   $$\text{Q.E.D.}$$
-
-### Dimensional Consistency Check:
-$$\text{Unit of } K = \frac{\text{m}^2 \cdot (\text{Pa/m})}{(\text{Pa/m}) \cdot \text{m}^2 \cdot (\text{Pa/m}) + \text{Pa}^2} = \frac{\text{m} \cdot \text{Pa}}{\text{Pa}^2} = \mathbf{\frac{\text{meter}}{\text{Pascal}}}$$
-Multiplying $K$ by pressure residual ($\text{Pa}$) produces an updated state strictly in **meters**.
+*(Section reserved)*
 
 ---
 
-## 4.6 Derivation of the Posterior Covariance Update ($P_{\text{new}}$)
+## 4.6 Posterior Covariance Update ($P_{\text{new}}$)
 
-Substitute optimal $K = P H^T (H P H^T + R)^{-1}$ back into the covariance expansion:
-$$P_{\text{new}} = P - K H P - P H^T K^T + K \underbrace{(H P H^T + R) K^T}_{P H^T}$$
-$$P_{\text{new}} = P - K H P - P H^T K^T + K (P H^T)^T$$
-$$P_{\text{new}} = P - K H P - P H^T K^T + P H^T K^T$$
-$$P_{\text{new}} = (I - K H) P$$
-$$\text{Q.E.D.}$$
-
-Since $(I - KH) < 1.0$, every incoming sensor measurement contracts the uncertainty ellipsoid, stabilizing the drone's altitude estimate.
+*(Section reserved)*
 
 ---
 
