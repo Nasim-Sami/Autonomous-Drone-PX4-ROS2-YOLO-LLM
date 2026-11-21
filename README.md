@@ -9,13 +9,29 @@
 [![Ollama](https://img.shields.io/badge/Ollama-Qwen_2.5_1.5B-000000?style=for-the-badge&logo=ollama&logoColor=white)](https://ollama.ai/)
 [![YOLOv8](https://img.shields.io/badge/Ultralytics-YOLOv8_Nano-00FFFF?style=for-the-badge&logo=yolo&logoColor=black)](https://ultralytics.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
+[![Demo Video](https://img.shields.io/badge/Demo_Video-1080p_60fps-blueviolet?style=for-the-badge&logo=youtube&logoColor=white)](Autonomous_Drone_PX4_ROS2_YOLO_LLM_Demo.mp4)
+[![Hardware Acceleration](https://img.shields.io/badge/GPU_Acceleration-NVIDIA_CUDA_13.2-76B900?style=for-the-badge&logo=nvidia&logoColor=white)](https://developer.nvidia.com/cuda-toolkit)
 [![GitHub Profile](https://img.shields.io/badge/Developer-Nasim--Sami-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Nasim-Sami)
 
 **A complete, production-grade autonomous quadcopter pipeline featuring Natural Language Mission Planning (English & Bengali), Physics-Based 3D Trajectory Gatekeeper, Real-time YOLOv8 Computer Vision Perception, and PX4 SITL Offboard Flight Control.**
 
-[Overview](#-overview) • [Architecture](#-architecture) • [Theory & Mathematics](#-mathematical-foundations--physics) • [Project Structure](#-project-structure) • [Quick Start](#-quick-start) • [Detailed Documentation](#-detailed-project-guide) • [Author](#-author)
+[Overview](#-overview) • [Demo Video](#-video-demonstration) • [Architecture](#-architecture) • [Theory & Mathematics](#-mathematical-foundations--physics) • [Project Structure](#-project-structure) • [Quick Start](#-quick-start) • [Detailed Documentation](#-detailed-project-guide) • [Author](#-author)
 
 </div>
+
+---
+
+## 🎥 Video Demonstration
+
+A full-length, high-definition demonstration of the autonomous system is available directly in this repository:
+🎬 **[`Autonomous_Drone_PX4_ROS2_YOLO_LLM_Demo.mp4`](Autonomous_Drone_PX4_ROS2_YOLO_LLM_Demo.mp4)** *(1080p @ 60fps, 2m 29s)*
+
+### Highlights Showcased:
+1. **Low-Altitude Collision Interception**: Natural language forward commands at $z < 3\text{m}$ are detected as hazardous obstacles and safely rejected with an automated warning.
+2. **Deterministic Takeoff & Altitude Climb**: Commanded vertical climb to $7\text{m}$ altitude passes the Gatekeeper shield.
+3. **Safe High-Altitude Overflight**: Cruising at $7\text{m}$ directly above a $2.5\text{m}$ human obstacle with $+4.5\text{m}$ guaranteed physical clearance.
+4. **Aerial Computer Vision Reconnaissance**: Live `"take a photo"` command captures an overhead snapshot processed via Ultralytics YOLOv8 with zero cache lag.
+5. **Real-time Aeronautical HUD & MAVLink Telemetry**: Seamless trajectory tracking visualized simultaneously in QGroundControl (Artificial Horizon, Satellite Map) and the custom Web Ground Station.
 
 ---
 
@@ -159,6 +175,9 @@ docker exec -it drone_jazzy_sim_instance /workspace/scripts/start_vision.sh
 
 # Terminal 4: Web Ground Station
 docker exec -it drone_jazzy_sim_instance bash -c "source /opt/ros/jazzy/setup.bash && source /opt/px4_ros2/install/setup.bash && python3 /workspace/scripts/web_ground_station.py 8080"
+
+# Terminal 5: QGroundControl HUD (Host with NVIDIA PRIME Offload)
+__NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia ~/QGroundControl.AppImage
 ```
 
 Open **`http://localhost:8080`** in your browser, speak or type your mission, and watch the drone navigate autonomously!

@@ -20,3 +20,6 @@ log/
 # Temporary logs & core dumps
 *.log
 core
+
+# Raw screen recordings
+202*.mp4

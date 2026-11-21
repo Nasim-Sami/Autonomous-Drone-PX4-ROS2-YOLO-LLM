@@ -6,6 +6,8 @@ export PX4_GZ_WORLD="drone_obstacle_world"
 export PX4_SYS_AUTOSTART=4010
 export PX4_SIM_MODEL="x500_mono_cam"
 export GZ_CONFIG_PATH="/usr/share/gz${GZ_CONFIG_PATH:+:${GZ_CONFIG_PATH}}"
+export __NV_PRIME_RENDER_OFFLOAD=1
+export __GLX_VENDOR_LIBRARY_NAME=nvidia
 
 echo "======================================================================"
 echo "🚁 Launching Autonomous Drone Simulation (PX4 SITL + Gazebo Harmonic)"

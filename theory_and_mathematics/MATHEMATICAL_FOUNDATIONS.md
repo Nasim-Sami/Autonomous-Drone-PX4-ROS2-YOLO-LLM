@@ -67,18 +67,31 @@ The onboard monocular camera is modeled as an ideal pinhole camera projection. C
 ```
 
 ### Geometric Proof via Similar Triangles ($\triangle$):
+
 1. Let the endpoints of the object in 3D camera coordinates be $A = (X, Y_A, D)$ and $B = (X, Y_B, D)$ where $H = |Y_A - Y_B|$.
 2. Let the projected endpoints on the sensor plane at $Z = f$ be $a = (x, y_a)$ and $b = (x, y_b)$ where $h = |y_a - y_b|$.
 3. Two pairs of right triangles are formed: $\triangle OAB$ in world space and $\triangle Oab$ in image space.
 4. Because optical rays travel in straight lines:
-   $$\angle AOB = \angle aOb \quad (\text{Vertical Opposite Angles})$$
-   $$\angle OBA = \angle Oba = 90^\circ$$
+
+$$
+\angle AOB = \angle aOb \quad (\text{Vertical Opposite Angles}), \quad \angle OBA = \angle Oba = 90^\circ
+$$
+
 5. Therefore, $\triangle OAB \sim \triangle Oab$ (Similar Triangles). By the ratio of corresponding sides:
-   $$\frac{\text{Image Height } (h)}{\text{Real Height } (H)} = \frac{\text{Focal Distance } (f)}{\text{Object Distance } (D)}$$
-   $$\frac{h}{H} = \frac{f}{D}$$
+
+$$
+\frac{\text{Image Height } (h)}{\text{Real Height } (H)} = \frac{\text{Focal Distance } (f)}{\text{Object Distance } (D)} \implies \frac{h}{H} = \frac{f}{D}
+$$
+
 6. Rearranging for metric distance $D$:
-   $$D = \frac{H \cdot f}{h}$$
-   $$\text{Q.E.D.}$$
+
+$$
+D = \frac{H \cdot f}{h}
+$$
+
+$$
+\blacksquare \quad \text{Q.E.D.}
+$$
 
 ---
 
@@ -90,13 +103,23 @@ A fundamental physical question arises in pinhole optics:
 This phenomenon is explained by classical electrodynamics and quantum statistical mechanics:
 
 ### 1. Principle of Linear Superposition (Classical Electrodynamics)
+
 In vacuum and standard atmospheric air, Maxwell's equations are strictly linear:
-$$\nabla \cdot \mathbf{E} = 0, \quad \nabla \times \mathbf{E} = -\frac{\partial \mathbf{B}}{\partial t}$$
+
+$$
+\nabla \cdot \mathbf{E} = 0, \quad \nabla \times \mathbf{E} = -\frac{\partial \mathbf{B}}{\partial t}
+$$
+
 When two electromagnetic wave packets $\mathbf{E}_1(\mathbf{r}, t)$ and $\mathbf{E}_2(\mathbf{r}, t)$ cross at spatial coordinate $\mathbf{r}_{\text{pinhole}}$, their fields sum vectorially:
-$$\mathbf{E}_{\text{total}} = \mathbf{E}_1 + \mathbf{E}_2$$
+
+$$
+\mathbf{E}_{\text{total}} = \mathbf{E}_1 + \mathbf{E}_2
+$$
+
 The waves pass directly through each other without altering their respective wavevectors $\mathbf{k}_1, \mathbf{k}_2$, frequencies $\omega$, or trajectories.
 
 ### 2. Quantum Statistics: Photons are Bosons, Not Fermions
+
 * Solid matter (electrons, atoms, salt, sugar) consists of **Fermions** with half-integer spin ($s = 1/2$). Fermions obey the Pauli Exclusion Principle: two fermions cannot occupy the exact same quantum state or spatial point simultaneously, causing mechanical collisions and bulk displacement.
 * Light consists of **Photons**, which are **gauge Bosons** with integer spin ($s = 1$). Bosons obey Bose-Einstein statistics and do not obey the exclusion principle. Trillions of photons can traverse the exact same spatial volume simultaneously with zero mutual interaction.
 * As a result, the rectilinear propagation maps each 3D world direction to a unique 2D coordinate on the sensor without mutual interference.
@@ -106,13 +129,34 @@ The waves pass directly through each other without altering their respective wav
 ## 1.3 The Monocular Scale Ambiguity Problem & Semantic Priors
 
 Because a monocular sensor performs a projection from $\mathbb{R}^3 \to \mathbb{R}^2$, depth information along the ray is lost:
-$$\begin{bmatrix} u \\ v \end{bmatrix} = \frac{f}{Z} \begin{bmatrix} X \\ Y \end{bmatrix}$$
+
+$$
+\begin{bmatrix}
+u \\
+v
+\end{bmatrix}
+=
+\frac{f}{Z}
+\begin{bmatrix}
+X \\
+Y
+\end{bmatrix}
+$$
+
 A small object close to the lens and a huge object far away project to identical pixel dimensions:
-$$\frac{h_{\text{toy}}}{D_{\text{near}}} = \frac{h_{\text{real}}}{D_{\text{far}}}$$
+
+$$
+\frac{h_{\text{toy}}}{D_{\text{near}}} = \frac{h_{\text{real}}}{D_{\text{far}}}
+$$
 
 ### Resolution via Semantic Class Priors ($H_{\text{prior}}$):
+
 Our vision perception architecture integrates YOLOv8 deep neural inference. When YOLOv8 classifies a detected bounding box with semantic label $c \in \mathcal{C}$, the system indexes a Gaussian prior of physical dimensions:
-$$H \sim \mathcal{N}(\mu_{H, c}, \sigma_{H, c}^2)$$
+
+$$
+H \sim \mathcal{N}(\mu_{H, c}, \sigma_{H, c}^2)
+$$
+
 * For class `person`: $\mu_H = 1.70\text{m}, \sigma_H = 0.08\text{m}$
 * For class `car`: $\mu_H = 1.45\text{m}, \sigma_H = 0.05\text{m}$
 
@@ -141,18 +185,36 @@ Stereo systems employ two coplanar pinhole cameras separated by baseline distanc
 ```
 
 ### Derivation:
+
 1. Define coordinate origin at the left camera center $O_L = (0, 0, 0)$. The right camera center is $O_R = (B, 0, 0)$.
 2. Let target 3D world point be $P = (X, Y, D)$ where depth $Z = D$.
 3. Projection onto the left image plane ($x_L$):
-   $$\frac{x_L}{f} = \frac{X}{D} \implies x_L = \frac{f \cdot X}{D}$$
+
+$$
+\frac{x_L}{f} = \frac{X}{D} \implies x_L = \frac{f \cdot X}{D}
+$$
+
 4. Projection onto the right image plane ($x_R$), where relative horizontal position is $(X - B)$:
-   $$\frac{x_R}{f} = \frac{X - B}{D} \implies x_R = \frac{f \cdot (X - B)}{D}$$
+
+$$
+\frac{x_R}{f} = \frac{X - B}{D} \implies x_R = \frac{f \cdot (X - B)}{D}
+$$
+
 5. Define disparity $d$ as the horizontal pixel coordinate difference:
-   $$d = x_L - x_R = \frac{f \cdot X}{D} - \frac{f \cdot (X - B)}{D}$$
-   $$d = \frac{f}{D} [X - (X - B)] = \frac{f \cdot B}{D}$$
+
+$$
+d = x_L - x_R = \frac{f \cdot X}{D} - \frac{f \cdot (X - B)}{D} = \frac{f}{D} [X - (X - B)] = \frac{f \cdot B}{D}
+$$
+
 6. Solving for metric depth $D$:
-   $$D = \frac{f \cdot B}{d}$$
-   $$\text{Q.E.D.}$$
+
+$$
+D = \frac{f \cdot B}{d}
+$$
+
+$$
+\blacksquare \quad \text{Q.E.D.}
+$$
 
 > **Key Theoretical Takeaway:** Notice that physical height $H$ has completely vanished from the formulation. Stereo vision extracts metric depth to arbitrary, unknown, or unclassified obstacles without requiring semantic size priors.
 
@@ -185,8 +247,33 @@ Autonomous drone software operates at the intersection of two distinct coordinat
    - Altitude is positive: climbing to $5\text{m}$ means setpoint $Z = +5.0\text{m}$.
 
 ### Frame Transformation Mapping:
+
 Sending ROS 2 setpoints directly to PX4 without transformation results in an inverted sign disaster: $+5\text{m}$ commanded in ENU would be interpreted by PX4 as driving 5 meters underground. The bridge applies the affine rotation matrix:
-$$\begin{bmatrix} x \\ y \\ z \end{bmatrix}_{\text{NED}} = \begin{bmatrix} 0 & 1 & 0 \\ 1 & 0 & 0 \\ 0 & 0 & -1 \end{bmatrix} \begin{bmatrix} x \\ y \\ z \end{bmatrix}_{\text{ENU}}$$
+
+$$
+\begin{bmatrix}
+x \\
+y \\
+z
+\end{bmatrix}_{\text{NED}}
+=
+\begin{bmatrix}
+0 & 1 & 0 \\
+1 & 0 & 0 \\
+0 & 0 & -1
+\end{bmatrix}
+\begin{bmatrix}
+x \\
+y \\
+z
+\end{bmatrix}_{\text{ENU}}
+=
+\begin{bmatrix}
+y \\
+x \\
+-z
+\end{bmatrix}_{\text{ENU}}
+$$
 
 ---
 
@@ -199,7 +286,10 @@ $$\begin{bmatrix} x \\ y \\ z \end{bmatrix}_{\text{NED}} = \begin{bmatrix} 0 & 1
   - Gravity vector $\mathbf{g} = [0, 0, 9.80665]^T$, GPS waypoints, and obstacle maps exist strictly in $\mathcal{F}_W$.
 
 Any vector $\mathbf{v}^B$ defined in the drone's body frame is mapped to the inertial world frame via the attitude rotation operator $R(q)$:
-$$\mathbf{v}^W = R_{B \to W}(q) \cdot \mathbf{v}^B$$
+
+$$
+\mathbf{v}^W = R_{B \to W}(q) \cdot \mathbf{v}^B
+$$
 
 ---
 
@@ -213,7 +303,30 @@ The orientation of the drone relative to the world is traditionally parameterize
 3. **Roll ($\phi$):** Rotation about body $X''$-axis by angle $\phi \in (-\pi, \pi]$.
 
 Elementary rotation matrices:
-$$R_X(\phi) = \begin{bmatrix} 1 & 0 & 0 \\ 0 & \cos\phi & \sin\phi \\ 0 & -\sin\phi & \cos\phi \end{bmatrix}, \quad R_Y(\theta) = \begin{bmatrix} \cos\theta & 0 & -\sin\theta \\ 0 & 1 & 0 \\ \sin\theta & 0 & \cos\theta \end{bmatrix}, \quad R_Z(\psi) = \begin{bmatrix} \cos\psi & \sin\psi & 0 \\ -\sin\psi & \cos\psi & 0 \\ 0 & 0 & 1 \end{bmatrix}$$
+
+$$
+R_X(\phi) = \begin{bmatrix}
+1 & 0 & 0 \\
+0 & \cos\phi & \sin\phi \\
+0 & -\sin\phi & \cos\phi
+\end{bmatrix}
+$$
+
+$$
+R_Y(\theta) = \begin{bmatrix}
+\cos\theta & 0 & -\sin\theta \\
+0 & 1 & 0 \\
+\sin\theta & 0 & \cos\theta
+\end{bmatrix}
+$$
+
+$$
+R_Z(\psi) = \begin{bmatrix}
+\cos\psi & \sin\psi & 0 \\
+-\sin\psi & \cos\psi & 0 \\
+0 & 0 & 1
+\end{bmatrix}
+$$
 
 ---
 
@@ -222,46 +335,166 @@ $$R_X(\phi) = \begin{bmatrix} 1 & 0 & 0 \\ 0 & \cos\phi & \sin\phi \\ 0 & -\sin\
 Drone IMU gyroscopes measure body angular velocity $\boldsymbol{\omega}_B = [p, q, r]^T$. We must relate body rates to the time derivatives of Euler angles $\dot{\boldsymbol{\eta}} = [\dot{\phi}, \dot{\theta}, \dot{\psi}]^T$.
 
 ### Kinematic Vector Addition:
+
 Total angular velocity in the body frame is the vector sum of intermediate rotations projected into the final frame:
-$$\boldsymbol{\omega}_B = \begin{bmatrix} \dot{\phi} \\ 0 \\ 0 \end{bmatrix} + R_X(\phi) \begin{bmatrix} 0 \\ \dot{\theta} \\ 0 \end{bmatrix} + R_X(\phi) R_Y(\theta) \begin{bmatrix} 0 \\ 0 \\ \dot{\psi} \end{bmatrix}$$
 
-Evaluating each term:
-1. $R_X(\phi) \begin{bmatrix} 0 \\ \dot{\theta} \\ 0 \end{bmatrix} = \begin{bmatrix} 0 \\ \dot{\theta} \cos\phi \\ -\dot{\theta} \sin\phi \end{bmatrix}$
-2. $R_Y(\theta) \begin{bmatrix} 0 \\ 0 \\ \dot{\psi} \end{bmatrix} = \begin{bmatrix} -\dot{\psi} \sin\theta \\ 0 \\ \dot{\psi} \cos\theta \end{bmatrix}$
-3. $R_X(\phi) \begin{bmatrix} -\dot{\psi} \sin\theta \\ 0 \\ \dot{\psi} \cos\theta \end{bmatrix} = \begin{bmatrix} -\dot{\psi} \sin\theta \\ \dot{\psi} \sin\phi \cos\theta \\ \dot{\psi} \cos\phi \cos\theta \end{bmatrix}$
+$$
+\boldsymbol{\omega}_B = \begin{bmatrix} \dot{\phi} \\ 0 \\ 0 \end{bmatrix} + R_X(\phi) \begin{bmatrix} 0 \\ \dot{\theta} \\ 0 \end{bmatrix} + R_X(\phi) R_Y(\theta) \begin{bmatrix} 0 \\ 0 \\ \dot{\psi} \end{bmatrix}
+$$
 
-Summing the components:
-$$\begin{bmatrix} p \\ q \\ r \end{bmatrix} = \begin{bmatrix} \dot{\phi} - \dot{\psi} \sin\theta \\ \dot{\theta} \cos\phi + \dot{\psi} \sin\phi \cos\theta \\ -\dot{\theta} \sin\phi + \dot{\psi} \cos\phi \cos\theta \end{bmatrix}$$
+Evaluating each projection term:
 
-This yields two coupled equations for $q$ and $r$:
-$$(1) \quad q = \dot{\theta} \cos\phi + \dot{\psi} \sin\phi \cos\theta$$
-$$(2) \quad r = -\dot{\theta} \sin\phi + \dot{\psi} \cos\phi \cos\theta$$
+- **Term 1 (Pitch rate rotated through Roll):**
 
-Multiply (1) by $\sin\phi$ and (2) by $\cos\phi$:
-$$q \sin\phi = \dot{\theta} \sin\phi \cos\phi + \dot{\psi} \sin^2\phi \cos\theta$$
-$$r \cos\phi = -\dot{\theta} \sin\phi \cos\phi + \dot{\psi} \cos^2\phi \cos\theta$$
+$$
+R_X(\phi) \begin{bmatrix} 0 \\ \dot{\theta} \\ 0 \end{bmatrix}
+=
+\begin{bmatrix}
+1 & 0 & 0 \\
+0 & \cos\phi & \sin\phi \\
+0 & -\sin\phi & \cos\phi
+\end{bmatrix}
+\begin{bmatrix}
+0 \\
+\dot{\theta} \\
+0
+\end{bmatrix}
+=
+\begin{bmatrix}
+0 \\
+\dot{\theta} \cos\phi \\
+-\dot{\theta} \sin\phi
+\end{bmatrix}
+$$
+
+- **Term 2 (Yaw rate rotated through Pitch):**
+
+$$
+R_Y(\theta) \begin{bmatrix} 0 \\ 0 \\ \dot{\psi} \end{bmatrix}
+=
+\begin{bmatrix}
+\cos\theta & 0 & -\sin\theta \\
+0 & 1 & 0 \\
+\sin\theta & 0 & \cos\theta
+\end{bmatrix}
+\begin{bmatrix}
+0 \\
+0 \\
+\dot{\psi}
+\end{bmatrix}
+=
+\begin{bmatrix}
+-\dot{\psi} \sin\theta \\
+0 \\
+\dot{\psi} \cos\theta
+\end{bmatrix}
+$$
+
+- **Term 3 (Yaw rate rotated through Pitch and Roll):**
+
+$$
+R_X(\phi) \left( R_Y(\theta) \begin{bmatrix} 0 \\ 0 \\ \dot{\psi} \end{bmatrix} \right)
+=
+\begin{bmatrix}
+1 & 0 & 0 \\
+0 & \cos\phi & \sin\phi \\
+0 & -\sin\phi & \cos\phi
+\end{bmatrix}
+\begin{bmatrix}
+-\dot{\psi} \sin\theta \\
+0 \\
+\dot{\psi} \cos\theta
+\end{bmatrix}
+=
+\begin{bmatrix}
+-\dot{\psi} \sin\theta \\
+\dot{\psi} \sin\phi \cos\theta \\
+\dot{\psi} \cos\phi \cos\theta
+\end{bmatrix}
+$$
+
+Summing all three component vectors yields the body angular velocity vector:
+
+$$
+\begin{bmatrix}
+p \\
+q \\
+r
+\end{bmatrix}
+=
+\begin{bmatrix}
+\dot{\phi} - \dot{\psi} \sin\theta \\
+\dot{\theta} \cos\phi + \dot{\psi} \sin\phi \cos\theta \\
+-\dot{\theta} \sin\phi + \dot{\psi} \cos\phi \cos\theta
+\end{bmatrix}
+$$
+
+This yields two coupled equations for pitch rate $q$ and yaw rate $r$:
+
+$$
+(1) \quad q = \dot{\theta} \cos\phi + \dot{\psi} \sin\phi \cos\theta
+$$
+
+$$
+(2) \quad r = -\dot{\theta} \sin\phi + \dot{\psi} \cos\phi \cos\theta
+$$
+
+Multiply $(1)$ by $\sin\phi$ and $(2)$ by $\cos\phi$:
+
+$$
+q \sin\phi = \dot{\theta} \sin\phi \cos\phi + \dot{\psi} \sin^2\phi \cos\theta
+$$
+
+$$
+r \cos\phi = -\dot{\theta} \sin\phi \cos\phi + \dot{\psi} \cos^2\phi \cos\theta
+$$
 
 Summing both equations:
-$$q \sin\phi + r \cos\phi = \dot{\psi} \cos\theta (\sin^2\phi + \cos^2\phi)$$
-Using the Pythagorean identity $\sin^2\phi + \cos^2\phi = 1$:
-$$q \sin\phi + r \cos\phi = \dot{\psi} \cos\theta$$
+
+$$
+q \sin\phi + r \cos\phi = \dot{\psi} \cos\theta (\sin^2\phi + \cos^2\phi)
+$$
+
+Using the fundamental Pythagorean identity $\sin^2\phi + \cos^2\phi = 1$:
+
+$$
+q \sin\phi + r \cos\phi = \dot{\psi} \cos\theta
+$$
 
 Solving for Yaw rate $\dot{\psi}$:
-$$\dot{\psi} = \frac{q \sin\phi + r \cos\phi}{\cos\theta}$$
-$$\text{Q.E.D.}$$
+
+$$
+\dot{\psi} = \frac{q \sin\phi + r \cos\phi}{\cos\theta}
+$$
+
+$$
+\blacksquare \quad \text{Q.E.D.}
+$$
 
 ---
 
 ## 3.3 The Mathematical Catastrophe of Gimbal Lock ($\div 0$)
 
 Examine the denominator of the derived kinematic rate:
-$$\lim_{\theta \to \pm 90^\circ} \cos\theta = 0 \implies \dot{\psi} = \frac{q \sin\phi + r \cos\phi}{0} \longrightarrow \pm \infty$$
+
+$$
+\lim_{\theta \to \pm 90^\circ} \cos\theta = 0 \implies \dot{\psi} = \frac{q \sin\phi + r \cos\phi}{0} \longrightarrow \pm \infty
+$$
 
 When the drone pitches vertical ($\theta = \pm 90^\circ$):
+
 1. **Division by Zero:** Flight computers evaluating IEEE-754 floating-point arithmetic produce `NaN` (Not a Number) or `+Inf`, causing actuator control loops to saturate or crash.
 2. **Matrix Rank Collapse:** Multiplying the three rotation matrices with $\theta = 90^\circ$:
-   $$R(\phi, 90^\circ, \psi) = \begin{bmatrix} 0 & \sin(\phi - \psi) & \cos(\phi - \psi) \\ 0 & \cos(\phi - \psi) & -\sin(\phi - \psi) \\ -1 & 0 & 0 \end{bmatrix}$$
-   The two independent parameters $\phi$ and $\psi$ collapse into a single degree of freedom $(\phi - \psi)$. The system loses one rotational dimension.
+
+$$
+R(\phi, 90^\circ, \psi) = \begin{bmatrix}
+0 & \sin(\phi - \psi) & \cos(\phi - \psi) \\
+0 & \cos(\phi - \psi) & -\sin(\phi - \psi) \\
+-1 & 0 & 0
+\end{bmatrix}
+$$
+
+The two independent parameters $\phi$ and $\psi$ collapse into a single degree of freedom $(\phi - \psi)$. The system loses one rotational dimension.
 
 ---
 
@@ -276,9 +509,15 @@ A 3-axis gimbal houses three concentric rings: Outer (Yaw), Middle (Pitch), Inne
 * Both rings now rotate around the identical physical vertical axis. The assembly loses its ability to steer horizontally without rolling.
 
 ### 2. Industrial 6-DOF Robot Arms (Manipulator Singularities)
+
 A standard 6-DOF arm (e.g. UR5, KUKA) decouples into:
+
 * **Joints 1, 2, 3 (Positioning Links):** Control $(X, Y, Z)$ using the Law of Cosines:
-  $$\cos\theta_3 = \frac{R^2 - L_1^2 - L_2^2}{2 L_1 L_2}$$
+
+$$
+\cos\theta_3 = \frac{R^2 - L_1^2 - L_2^2}{2 L_1 L_2}
+$$
+
   - **Elbow Singularity:** $\theta_3 = 0^\circ \implies R = L_1 + L_2$ (Arm fully extended to workspace boundary).
   - **Shoulder Singularity ($r = 0$):** Wrist center crosses the vertical rotation axis of Joint 1 ($r = \sqrt{x^2+y^2} = 0$). To generate sideways linear velocity $v_t = r \cdot \dot{\theta}_1$, Joint 1 velocity requires $\dot{\theta}_1 = \frac{v_t}{0} \to \infty$.
 * **Joints 4, 5, 6 (Spherical Wrist):** Three intersecting revolute axes controlling orientation.
@@ -289,41 +528,97 @@ A standard 6-DOF arm (e.g. UR5, KUKA) decouples into:
 ## 3.5 Hamilton's 4D Quaternion Algebra on $S^3$
 
 To eliminate singularities, rotations are embedded in the 4D unit hypersphere $S^3$:
-$$\mathbb{H} = \{ q = w + x i + y j + z k \mid w, x, y, z \in \mathbb{R} \}$$
+
+$$
+\mathbb{H} = \{ q = w + x i + y j + z k \mid w, x, y, z \in \mathbb{R} \}
+$$
+
 Fundamental non-commutative product rules:
-$$i^2 = j^2 = k^2 = ijk = -1$$
-$$ij = k, \quad jk = i, \quad ki = j$$
-$$ji = -k, \quad kj = -i, \quad ik = -j$$
+
+$$
+i^2 = j^2 = k^2 = ijk = -1
+$$
+
+$$
+ij = k, \quad jk = i, \quad ki = j
+$$
+
+$$
+ji = -k, \quad kj = -i, \quad ik = -j
+$$
 
 ### Axis-Angle Parameterization:
+
 By Euler's Rotation Theorem, any 3D rotation can be expressed as a single rotation by angle $\theta$ around a unit axis $\mathbf{u} = (u_x, u_y, u_z)$:
-$$q = \left[ \cos\left(\frac{\theta}{2}\right), \; \mathbf{u} \sin\left(\frac{\theta}{2}\right) \right] = [w, x, y, z]$$
+
+$$
+q = \left[ \cos\left(\frac{\theta}{2}\right), \; \mathbf{u} \sin\left(\frac{\theta}{2}\right) \right] = [w, x, y, z]
+$$
+
 Unit norm constraint:
-$$\|q\|^2 = w^2 + x^2 + y^2 + z^2 = \cos^2\left(\frac{\theta}{2}\right) + \|\mathbf{u}\|^2 \sin^2\left(\frac{\theta}{2}\right) = 1$$
+
+$$
+\|q\|^2 = w^2 + x^2 + y^2 + z^2 = \cos^2\left(\frac{\theta}{2}\right) + \|\mathbf{u}\|^2 \sin^2\left(\frac{\theta}{2}\right) = 1
+$$
 
 ---
 
 ## 3.6 The Quaternion Sandwich Operator ($p' = q \cdot p \cdot q^*$)
 
 To rotate a 3D point $\mathbf{v} = (v_x, v_y, v_z)$, it is mapped to a pure quaternion with zero real scalar:
-$$p = 0 + v_x i + v_y j + v_z k$$
+
+$$
+p = 0 + v_x i + v_y j + v_z k
+$$
+
 The rotated vector is computed via the double Hamilton product:
-$$p' = q \cdot p \cdot q^*$$
+
+$$
+p' = q \cdot p \cdot q^*
+$$
+
 where $q^* = [w, -x, -y, -z]$ is the quaternion conjugate ($q^* = q^{-1}$ for unit quaternions).
 
 ### Worked Numerical Proof:
+
 Rotate point $\mathbf{v} = (1, 0, 0)$ by $\theta = 90^\circ$ counterclockwise around $Z$-axis $\mathbf{u} = (0, 0, 1)$:
-1. $\theta/2 = 45^\circ \implies \cos(45^\circ) = \frac{1}{\sqrt{2}}, \sin(45^\circ) = \frac{1}{\sqrt{2}}$.
-2. $q = \frac{1}{\sqrt{2}} + \frac{1}{\sqrt{2}}k, \quad q^* = \frac{1}{\sqrt{2}} - \frac{1}{\sqrt{2}}k$.
-3. $p = 0 + 1i + 0j + 0k = i$.
-4. Compute $q \cdot p$:
-   $$q \cdot p = \left(\frac{1}{\sqrt{2}} + \frac{1}{\sqrt{2}}k\right) i = \frac{1}{\sqrt{2}}i + \frac{1}{\sqrt{2}}(ki) = \frac{1}{\sqrt{2}}i + \frac{1}{\sqrt{2}}j$$
-5. Compute $(q \cdot p) \cdot q^*$:
-   $$p' = \left(\frac{1}{\sqrt{2}}i + \frac{1}{\sqrt{2}}j\right) \left(\frac{1}{\sqrt{2}} - \frac{1}{\sqrt{2}}k\right)$$
-   $$p' = \frac{1}{2}i - \frac{1}{2}(ik) + \frac{1}{2}j - \frac{1}{2}(jk)$$
-   Since $ik = -j$ and $jk = i$:
-   $$p' = \frac{1}{2}i - \frac{1}{2}(-j) + \frac{1}{2}j - \frac{1}{2}(i) = 0i + 1j + 0k = (0, 1, 0)$$
-Point $(1, 0, 0)$ rotated $90^\circ$ around $Z$ lands exactly at $(0, 1, 0)$.
+
+1. Half-angle evaluation: $\theta/2 = 45^\circ \implies \cos(45^\circ) = \frac{1}{\sqrt{2}}, \; \sin(45^\circ) = \frac{1}{\sqrt{2}}$.
+2. Unit quaternion and conjugate:
+
+$$
+q = \frac{1}{\sqrt{2}} + \frac{1}{\sqrt{2}}k, \quad q^* = \frac{1}{\sqrt{2}} - \frac{1}{\sqrt{2}}k
+$$
+
+3. Pure vector quaternion:
+
+$$
+p = 0 + 1i + 0j + 0k = i
+$$
+
+4. Compute intermediate product $q \cdot p$:
+
+$$
+q \cdot p = \left(\frac{1}{\sqrt{2}} + \frac{1}{\sqrt{2}}k\right) i = \frac{1}{\sqrt{2}}i + \frac{1}{\sqrt{2}}(ki) = \frac{1}{\sqrt{2}}i + \frac{1}{\sqrt{2}}j
+$$
+
+5. Compute full sandwich product $(q \cdot p) \cdot q^*$:
+
+$$
+p' = \left(\frac{1}{\sqrt{2}}i + \frac{1}{\sqrt{2}}j\right) \left(\frac{1}{\sqrt{2}} - \frac{1}{\sqrt{2}}k\right)
+$$
+
+$$
+p' = \frac{1}{2}i - \frac{1}{2}(ik) + \frac{1}{2}j - \frac{1}{2}(jk)
+$$
+
+Since $ik = -j$ and $jk = i$:
+
+$$
+p' = \frac{1}{2}i - \frac{1}{2}(-j) + \frac{1}{2}j - \frac{1}{2}(i) = 0i + 1j + 0k = (0, 1, 0)
+$$
+
+The point $(1, 0, 0)$ rotated $90^\circ$ around $Z$ lands precisely at $(0, 1, 0)$, validating the double-cover quaternion algebra.
 
 ---
 
@@ -331,16 +626,23 @@ Point $(1, 0, 0)$ rotated $90^\circ$ around $Z$ lands exactly at $(0, 1, 0)$.
 
 Evaluating $p' = q p q^*$ symbolically yields the direct matrix transformation $\mathbf{v}' = R(q) \mathbf{v}$:
 
-$$R(q) = \begin{bmatrix}
+$$
+R(q) = \begin{bmatrix}
 1 - 2(y^2 + z^2) & 2(xy - zw) & 2(xz + yw) \\
 2(xy + zw) & 1 - 2(x^2 + z^2) & 2(yz - xw) \\
 2(xz - yw) & 2(yz + xw) & 1 - 2(x^2 + y^2)
-\end{bmatrix}$$
+\end{bmatrix}
+$$
 
 ### Continuous Kinematic Derivative (PX4 Core Loop):
+
 In the flight controller firmware, attitude integration uses:
-$$\dot{q} = \frac{1}{2} q \otimes \boldsymbol{\omega}_B$$
-Where $\boldsymbol{\omega}_B = [0, p, q, r]^T$. This differential equation contains zero trigonometric functions and zero divisions, providing unconditional mathematical stability across all attitudes.
+
+$$
+\dot{q} = \frac{1}{2} q \otimes \boldsymbol{\omega}_B
+$$
+
+where $\boldsymbol{\omega}_B = [0, p, q, r]^T$. This differential equation contains zero trigonometric functions and zero divisions, providing unconditional mathematical stability across all attitudes.
 
 ---
 
@@ -362,7 +664,10 @@ Autonomous hovering requires accurate estimates of position $(x, y, z)$ and velo
 ## 4.2 Error Covariances & Dimensional Analysis ($P, Q, R$)
 
 In probabilistic estimation, uncertainty is parameterized as a covariance matrix representing expected squared error:
-$$\text{Cov}(\mathbf{e}) = E[(\mathbf{e} - \mu)(\mathbf{e} - \mu)^T]$$
+
+$$
+\text{Cov}(\mathbf{e}) = E[(\mathbf{e} - \mu)(\mathbf{e} - \mu)^T]
+$$
 
 * **$P$ (State Error Covariance):** Represents the filter's internal uncertainty in state estimate $\hat{\mathbf{x}}$.
   - Altitude state variance $\sigma_z^2$ has units of **$\text{meters}^2$ ($\text{m}^2$)**.
@@ -377,11 +682,19 @@ $$\text{Cov}(\mathbf{e}) = E[(\mathbf{e} - \mu)(\mathbf{e} - \mu)^T]$$
 
 The classic Kalman filter relies on the affine closure property of Gaussian random variables:
 If $\mathbf{x} \sim \mathcal{N}(\mu, \Sigma)$ and $\mathbf{y} = A \mathbf{x} + \mathbf{b}$, then:
-$$\mathbf{y} \sim \mathcal{N}(A \mu + \mathbf{b}, \; A \Sigma A^T)$$
+
+$$
+\mathbf{y} \sim \mathcal{N}(A \mu + \mathbf{b}, \; A \Sigma A^T)
+$$
+
 The output remains an exact, symmetrical Gaussian distribution (Bell Curve).
 
 However, drone flight equations are inherently nonlinear:
-$$y = h(z) = P_0 e^{-\frac{M g}{R T} z}$$
+
+$$
+y = h(z) = P_0 e^{-\frac{M g}{R T} z}
+$$
+
 Passing a Gaussian random variable through an exponential curve skews the distribution, shifts the mean away from the mode, and generates non-Gaussian higher-order moments. Classical linear filtering fails because mean and covariance no longer completely describe the probability density function.
 
 ---
@@ -389,26 +702,135 @@ Passing a Gaussian random variable through an exponential curve skews the distri
 ## 4.4 First-Order Taylor Series & Jacobian Linearization
 
 The Extended Kalman Filter (EKF) resolves non-linearity by linearizing functions locally around the current state estimate $\hat{\mathbf{x}}$ via first-order Taylor expansion:
-$$h(\mathbf{x}) \approx h(\hat{\mathbf{x}}) + \left.\frac{\partial h}{\partial \mathbf{x}}\right|_{\hat{\mathbf{x}}} (\mathbf{x} - \hat{\mathbf{x}})$$
+
+$$
+h(\mathbf{x}) \approx h(\hat{\mathbf{x}}) + \left.\frac{\partial h}{\partial \mathbf{x}}\right|_{\hat{\mathbf{x}}} (\mathbf{x} - \hat{\mathbf{x}})
+$$
 
 The derivative matrix is the **Measurement Jacobian ($H$)**:
-$$H = \left.\frac{\partial h}{\partial \mathbf{x}}\right|_{\hat{\mathbf{x}}}$$
+
+$$
+H = \left.\frac{\partial h}{\partial \mathbf{x}}\right|_{\hat{\mathbf{x}}}
+$$
 
 For barometric altitude estimation:
-$$h(z) = P_0 e^{-k z} \implies H = \frac{dh}{dz} = -k P_0 e^{-k z}$$
+
+$$
+h(z) = P_0 e^{-k z} \implies H = \frac{dh}{dz} = -k P_0 e^{-k z}
+$$
+
 $H$ has units of **$\frac{\text{Pascal}}{\text{meter}}$ ($\text{Pa/m}$)**, representing the local rate of pressure change per meter of altitude.
 
 ---
 
 ## 4.5 Optimal Kalman Gain ($K$)
 
-*(Section reserved)*
+The Kalman gain $K_k$ dictates how much the state estimate should correct in response to the measurement innovation $\tilde{\mathbf{y}}_k = \mathbf{y}_k - h(\hat{\mathbf{x}}_{k|k-1})$.
+
+### 1. Optimization Objective:
+We seek the gain matrix $K_k$ that minimizes the mean squared estimation error, corresponding to the trace of the posterior error covariance:
+
+$$
+J(K_k) = \text{Tr}(P_{k|k}) = E[\|\mathbf{x}_k - \hat{\mathbf{x}}_{k|k}\|^2]
+$$
+
+### 2. Derivation:
+The innovation covariance $S_k$ propagates prior state covariance through the measurement Jacobian $H_k$:
+
+$$
+S_k = H_k P_{k|k-1} H_k^T + R_k
+$$
+
+Taking the matrix derivative of $\text{Tr}(P_{k|k})$ with respect to $K_k$ and setting it to zero ($\frac{\partial \text{Tr}(P_{k|k})}{\partial K_k} = 0$):
+
+$$
+-2 (P_{k|k-1} H_k^T) + 2 K_k (H_k P_{k|k-1} H_k^T + R_k) = 0
+$$
+
+Solving for optimal $K_k$:
+
+$$
+K_k = P_{k|k-1} H_k^T S_k^{-1} = P_{k|k-1} H_k^T (H_k P_{k|k-1} H_k^T + R_k)^{-1}
+$$
+
+### 3. Dimensional Verification in Drone Altitude Fusion:
+In 1D barometric altitude estimation:
+* Prior covariance $P$ has units of $\text{m}^2$.
+* Measurement noise $R$ has units of $\text{Pa}^2$.
+* Jacobian $H = \frac{dh}{dz}$ has units of $\text{Pa/m}$.
+
+Evaluating the physical dimensions of $K$:
+
+$$
+[K] = \frac{[P] \cdot [H]}{[H]^2 [P] + [R]} = \frac{\text{m}^2 \cdot (\text{Pa/m})}{(\text{Pa/m})^2 \cdot \text{m}^2 + \text{Pa}^2} = \frac{\text{m} \cdot \text{Pa}}{\text{Pa}^2} = \frac{\text{m}}{\text{Pa}}
+$$
+
+The Kalman gain carries units of **meters per Pascal ($\text{m/Pa}$)**. When multiplied by the pressure innovation $\tilde{y} = (y_{\text{measured}} - y_{\text{pred}}) \in \text{Pa}$, the correction term $K \tilde{y}$ produces an altitude correction strictly in **meters**!
+
+### 4. Asymptotic Extremes:
+* **Zero Sensor Noise ($R \to 0$):**
+
+$$
+\lim_{R \to 0} K = P H^T (H P H^T)^{-1} = H^{-1}
+$$
+
+  The filter trusts the sensor completely, setting the state directly to the inverted measurement.
+* **Infinite Sensor Noise ($R \to \infty$):**
+
+$$
+\lim_{R \to \infty} K = 0
+$$
+
+  The filter ignores the sensor entirely, preserving the IMU integration trajectory without disturbance.
 
 ---
 
 ## 4.6 Posterior Covariance Update ($P_{\text{new}}$)
 
-*(Section reserved)*
+Incorporating new sensor information strictly reduces estimation uncertainty.
+
+### 1. Algebraic Derivation (Joseph Stabilized Form):
+The posterior estimation error is:
+
+$$
+\mathbf{e}_{k|k} = \mathbf{x}_k - \hat{\mathbf{x}}_{k|k} = (I - K_k H_k) \mathbf{e}_{k|k-1} - K_k \mathbf{v}_k
+$$
+
+Computing the expectation $P_{k|k} = E[\mathbf{e}_{k|k} \mathbf{e}_{k|k}^T]$ with mutually uncorrelated state and noise errors ($E[\mathbf{e}_{k|k-1} \mathbf{v}_k^T] = 0$):
+
+$$
+P_{k|k} = (I - K_k H_k) P_{k|k-1} (I - K_k H_k)^T + K_k R_k K_k^T
+$$
+
+This is the **Joseph stabilized covariance update**, which guarantees positive semi-definiteness even under finite-precision floating-point roundoff.
+
+### 2. Standard Formulation:
+Substituting the optimal Kalman gain $K_k = P_{k|k-1} H_k^T S_k^{-1}$ into the Joseph equation simplifies directly to:
+
+$$
+P_{k|k} = (I - K_k H_k) P_{k|k-1}
+$$
+
+### 3. The Contraction Factor and Bounded Variance:
+In the scalar altitude filter:
+
+$$
+P_{\text{new}} = (1 - K \cdot H) P_{\text{prior}}
+$$
+
+Because $K = \frac{P H}{H^2 P + R}$ and $H > 0$:
+
+$$
+K \cdot H = \frac{H^2 P}{H^2 P + R} \in (0, 1) \implies (1 - K \cdot H) < 1.0
+$$
+
+Therefore:
+
+$$
+P_{\text{new}} < P_{\text{prior}}
+$$
+
+Every incoming sensor measurement contracts the uncertainty envelope. This explains mathematically why adding Gazebo's `AirPressure` sensor halted the open-loop IMU random walk and allowed PX4's EKF2 pre-flight safety check to approve takeoff!
 
 ---
 
@@ -520,7 +942,9 @@ class DroneAltitudeEKF:
 
 Naive 2D obstacle avoidance schemes trigger emergency stops whenever an obstacle appears in the camera field-of-view. Our pipeline implements a volumetric **3D Altitude Gatekeeper**:
 
-$$\Delta h = h_{\text{drone}} - h_{\text{obstacle}}$$
+$$
+\Delta h = h_{\text{drone}} - h_{\text{obstacle}}
+$$
 
 ```text
        Drone Path Altitude = 5.0m
@@ -543,7 +967,11 @@ $$\Delta h = h_{\text{drone}} - h_{\text{obstacle}}$$
 ## 5.2 10Hz Heartbeat & Dead Man's Switch Failsafe
 
 PX4 Offboard mode enforces an aerospace-grade watchdog timer:
-$$\Delta t_{\text{loss}} > 500\text{ms} \implies \text{Trigger Offboard Failsafe}$$
+
+$$
+\Delta t_{\text{loss}} > 500\text{ms} \implies \text{Trigger Offboard Failsafe}
+$$
+
 If ROS 2 stops publishing setpoints at $\ge 2\text{Hz}$ (e.g. process crash or network drop), PX4 immediately assumes companion computer failure and defaults to onboard autonomous hover (`Loiter`) or `Return-to-Launch (RTL)`, preventing flyaway accidents.
 
 ---
@@ -563,5 +991,9 @@ flowchart LR
 
 1. **Probabilistic Tier (LLM):** Restricted strictly to natural language parsing, extracting semantic intent into structured JSON schema.
 2. **Deterministic Tier (ROS 2 Python Node):** Evaluates mathematical invariants:
-   $$\|\mathbf{v}\| \le v_{\max}, \quad z_{\min} \le z \le z_{\max}, \quad \text{RayCollision}(\mathbf{p}_{\text{start}}, \mathbf{p}_{\text{target}}) = \emptyset$$
-   Only commands passing all physical safety checks reach the MAVLink flight controller.
+
+$$
+\|\mathbf{v}\| \le v_{\max}, \quad z_{\min} \le z \le z_{\max}, \quad \text{RayCollision}(\mathbf{p}_{\text{start}}, \mathbf{p}_{\text{target}}) = \emptyset
+$$
+
+Only commands passing all physical safety checks reach the MAVLink flight controller.

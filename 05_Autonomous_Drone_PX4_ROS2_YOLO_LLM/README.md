@@ -97,12 +97,18 @@ flowchart TD
 - Full EKF2 sensor fusion: IMU, Barometer (`AirPressure`), Magnetometer (`Magnetometer`), and GPS (`NavSat`).
 - Simultaneous telemetry streaming to QGroundControl for real-time aeronautical HUD, artificial horizon, and satellite map tracking.
 
+### 5. High-Fidelity Demonstration Video
+- Full-length, production-grade video demo available at **`Autonomous_Drone_PX4_ROS2_YOLO_LLM_Demo.mp4`** (1080p @ 60fps, 2m 29s).
+- Features dynamic lower-third telemetry banners highlighting real-time obstacle rejection, altitude climb with clearance computation, YOLOv8 aerial reconnaissance, and bilingual voice mission dispatch.
+
 ---
 
 ## 📦 Prerequisites
 
 - **Host OS**: Ubuntu 24.04 / 22.04 LTS (Linux x86_64)
-- **Container Engine**: Docker CE with Hardware GPU Acceleration (`/dev/dri`)
+- **Dedicated GPU**: NVIDIA RTX / GTX GPU (e.g. RTX 3050 Ti Laptop / Desktop) with proprietary NVIDIA drivers (v535+)
+- **GPU Container Runtime**: NVIDIA Container Toolkit (`nvidia-container-toolkit`) configured for Docker
+- **Container Engine**: Docker CE with `--gpus all` support
 - **LLM Engine**: Ollama with model `qwen2.5:1.5b`
 - **GCS Software**: QGroundControl (`QGroundControl.AppImage`)
 
@@ -110,7 +116,35 @@ flowchart TD
 
 ## 🔧 Installation & Setup
 
-### 1. Install & Verify Ollama LLM
+### 1. Install NVIDIA Container Toolkit (Host)
+To ensure Gazebo Harmonic, PX4, and YOLOv8 achieve high frame rates (60fps) without pegging the CPU, configure Docker with NVIDIA GPU acceleration:
+
+```bash
+# 1. Add NVIDIA official package repository
+curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg \
+  && curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+    sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+    sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+
+# 2. Install nvidia-container-toolkit
+sudo apt-get update
+sudo apt-get install -y nvidia-container-toolkit
+
+# 3. Configure Docker runtime and restart daemon
+sudo nvidia-ctk runtime configure --runtime=docker
+sudo systemctl restart docker
+
+# 4. Verify GPU passthrough
+docker run --rm --gpus all ubuntu nvidia-smi
+```
+
+> [!NOTE]
+> On hybrid laptops (NVIDIA Optimus / ASUS TUF / ROG), verify that the discrete GPU is powered on:
+> ```bash
+> echo 0 | sudo tee /sys/devices/platform/asus-nb-wmi/dgpu_disable && echo 1 | sudo tee /sys/bus/pci/rescan
+> ```
+
+### 2. Install & Verify Ollama LLM (Host)
 ```bash
 # Install Ollama (Host)
 curl -fsSL https://ollama.com/install.sh | sh
@@ -122,7 +156,7 @@ ollama pull qwen2.5:1.5b
 systemctl is-active ollama
 ```
 
-### 2. Download QGroundControl (Host)
+### 3. Download QGroundControl (Host)
 ```bash
 # Download latest stable AppImage
 wget https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl.AppImage -O ~/QGroundControl.AppImage
@@ -131,13 +165,15 @@ wget https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl.AppImage -O ~/Q
 chmod +x ~/QGroundControl.AppImage
 ```
 
-### 3. Build / Launch Docker Container
+### 4. Build / Launch Docker Container
 The simulation runs inside a self-contained Docker container configured with ROS 2 Jazzy, PX4 SITL v1.15, and Gazebo Harmonic:
+
 ```bash
 cd docker
 chmod +x run.sh run_sim.sh
 ./run.sh
 ```
+*`run.sh` automatically detects your NVIDIA GPU and passes `--gpus all`, discrete rendering flags, and local X11 display sockets.*
 
 ---
 
@@ -154,8 +190,10 @@ xhost +local:root
 # 2. Attach to persistent container
 docker start -ai drone_jazzy_sim_instance
 ```
-Inside the container shell (`root@...:/workspace#`), export environment variables and launch:
+Inside the container shell (`root@...:/workspace#`), launch PX4 SITL & Gazebo with NVIDIA PRIME GPU offload:
 ```bash
+export __NV_PRIME_RENDER_OFFLOAD=1
+export __GLX_VENDOR_LIBRARY_NAME=nvidia
 export PX4_GZ_WORLD="drone_obstacle_world"
 export PX4_SYS_AUTOSTART=4010
 export PX4_SIM_MODEL="x500_mono_cam"
@@ -163,9 +201,11 @@ export GZ_CONFIG_PATH="/usr/share/gz${GZ_CONFIG_PATH:+:${GZ_CONFIG_PATH}}"
 
 /opt/px4-gazebo/bin/px4-gazebo
 ```
+*(Or simply run the automated script: `/workspace/docker/run_sim.sh`)*
+
 * **`PX4_GZ_WORLD="drone_obstacle_world"`**: Loads custom world with human ($4\text{m}$), SUV ($6\text{m}$), and red cube ($3\text{m}$) obstacles.
 * **`PX4_SYS_AUTOSTART=4010`**: PX4 airframe ID for `x500_mono_cam` (quadcopter with forward-mounted camera).
-* **`GZ_CONFIG_PATH`**: Ensures Gazebo Harmonic finds the `sim` plugin alongside ROS 2 Jazzy vendor packages.
+* **`__NV_PRIME_RENDER_OFFLOAD=1`**: Forces Gazebo Harmonic rendering to the dedicated NVIDIA GPU.
 
 ---
 
@@ -183,8 +223,8 @@ On the host machine, open a 3rd terminal:
 ```bash
 docker exec -it drone_jazzy_sim_instance /workspace/scripts/start_vision.sh
 ```
-* Bridges Gazebo topic `/world/drone_obstacle_world/model/x500_mono_cam_0/link/camera_link/sensor/camera/image` $\to$ ROS 2 `/camera/image_raw`.
-* Launches Ultralytics YOLOv8 real-time detector.
+* **Auto-Discovery:** `start_vision.sh` dynamically discovers the active Gazebo camera topic (e.g., `/world/drone_obstacle_world/model/x500_mono_cam_0/...`) and launches `ros_gz_bridge`.
+* Launches Ultralytics YOLOv8 real-time detector on the `/camera/image_raw` feed.
 
 ---
 
@@ -194,17 +234,18 @@ On the host machine, open a 4th terminal:
 docker exec -it drone_jazzy_sim_instance bash -c "source /opt/ros/jazzy/setup.bash && source /opt/px4_ros2/install/setup.bash && python3 /workspace/scripts/web_ground_station.py 8080"
 ```
 * Starts the interactive Web GCS dashboard on port 8080.
-* Connects the browser to Ollama, Gatekeeper, and PX4 flight mode publishers.
+* Integrated with Ollama `"keep_alive": "60m"` to eliminate cold-start LLM latency.
+* Timestamp query parameter (`?t=Date.now()`) guarantees immediate cache-busting for aerial camera snapshots.
 
 ---
 
 ### **Terminal 5: QGroundControl HUD (Host)**
-On the host machine, open a 5th terminal:
+On the host machine, launch QGroundControl with NVIDIA discrete GPU offload:
 ```bash
-~/QGroundControl.AppImage
+__NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia ~/QGroundControl.AppImage
 ```
 * Connects automatically to PX4 SITL MAVLink broadcast (`UDP 18570 / 14550`).
-* Displays Artificial Horizon, Attitude tape, Altitude AGL, and GPS map.
+* Displays Artificial Horizon, Attitude tape, Altitude AGL, and GPS map at full 60fps.
 
 ---
 
@@ -218,7 +259,7 @@ Open your browser at **`http://localhost:8080`**:
 | **Low-Altitude Collision** | `"সামনে ৫ মিটার যাও"` or `"Go forward 5m"` | **REJECTED 🛑** (`Detected 'BUS' ~3.7m ahead. Climb to >=3m`) | Motors remain idle; no flight hazard. |
 | **Safe Altitude Climb** | `"Take off to 5 meters"` | **APPROVED ✅** | Spools up motors, climbs to $5.0\text{ m}$, hovers. |
 | **High-Altitude Overflight** | `"Take off to 7 meters then go forward 10 meters"` | **APPROVED ✅** (`Overflight Safe: Cruising at 7m (+4m clearance)`) | Climbs to $7.0\text{ m}$, flies forward $10.0\text{ m}$ directly over the car/person. |
-| **Aerial Photo Reconnaissance** | `"Take a photo"` or `"ছবি তোলো"` | **APPROVED ✅** | Triggers camera shutter, saves and displays fresh snapshot in UI. |
+| **Aerial Photo Reconnaissance** | `"Take a photo"` or `"ছবি তোলো"` | **APPROVED ✅** | Triggers camera shutter, saves and displays fresh snapshot in UI with timestamp cache-busting. |
 
 ### 2. Automated 22/22 LLM & Safety Benchmark
 Run the standalone regression test suite:
@@ -237,6 +278,12 @@ docker exec -it drone_jazzy_sim_instance bash -c "source /opt/ros/jazzy/setup.ba
 
 | Technical Challenge | Root Cause | Engineering Solution |
 | :--- | :--- | :--- |
+| **Simulation Stutter / CPU Pegged (100%)** | Gazebo, PX4 SITL, and YOLO were executing on software Intel UHD rendering. | Installed `nvidia-container-toolkit`, configured Docker `--gpus all`, and offloaded rendering via `__NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia`. |
+| **Docker `could not select device driver ""`** | Docker daemon lacked NVIDIA runtime configuration. | Configured daemon via `sudo nvidia-ctk runtime configure --runtime=docker && sudo systemctl restart docker`. |
+| **ASUS Laptop dGPU Missing (`NVRM`)** | Hardware WMI power switch `/sys/devices/platform/asus-nb-wmi/dgpu_disable` was active (`1`). | Toggled switch via `echo 0 | sudo tee .../dgpu_disable` and triggered a PCI bus rescan. |
+| **Ollama Read Timeout on Cold Start** | Initial model load into VRAM took ~54s, exceeding 60s HTTP client timeout. | Added `"keep_alive": "60m"` in payload and increased client timeout to 90s. |
+| **Stale Aerial Camera Snapshots in Web UI** | Browser HTTP cache served previous `/captures/latest.jpg` image. | Added timestamp cache-busting (`/captures/latest.jpg?t=${Date.now()}`) in `web_ground_station.py`. |
+| **Camera Bridge Broken After Airframe Change** | Hardcoded topic string looked for `/world/.../gz_x500_0/...` instead of `x500_mono_cam_0`. | Enhanced `start_vision.sh` to auto-discover active Gazebo camera topics dynamically. |
 | **Gazebo CLI `gz sim` Missing** | Sourcing ROS 2 Jazzy overwrote `GZ_CONFIG_PATH` with vendor paths, hiding `/usr/share/gz/sim8.yaml`. | Explicitly bound `/usr/share/gz` into `GZ_CONFIG_PATH` in `~/.bashrc` and launcher scripts. |
 | **PX4 SITL Timed Out on Startup** | World name in SDF was `<world name="default">`, but PX4 searched for `/world/drone_obstacle_world/scene/info`. | Renamed world XML tag to `<world name="drone_obstacle_world">`. |
 | **Preflight Check Failed (No Arm)** | Dedicated world SDF was missing Gazebo `AirPressure` (barometer) and `Magnetometer` (compass) plugins. | Added all 11 core Gazebo sensor plugins to `drone_obstacle_world.sdf`. |
