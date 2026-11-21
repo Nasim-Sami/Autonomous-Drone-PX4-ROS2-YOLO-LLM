@@ -382,7 +382,7 @@ FEW_SHOT_EXAMPLES = [
     }
 ]
 
-def parse_user_command(user_prompt: str, timeout: int = 60) -> Dict[str, Any]:
+def parse_user_command(user_prompt: str, timeout: int = 90) -> Dict[str, Any]:
     """
     Calls Ollama to parse natural language prompt into structured steps.
     """
@@ -395,6 +395,7 @@ def parse_user_command(user_prompt: str, timeout: int = 60) -> Dict[str, Any]:
         "messages": messages,
         "format": "json",
         "stream": False,
+        "keep_alive": "60m",
         "options": {
             "temperature": 0.0,
             "num_predict": 512
