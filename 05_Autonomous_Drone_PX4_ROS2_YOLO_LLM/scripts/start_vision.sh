@@ -5,17 +5,24 @@ set -e
 source /opt/ros/jazzy/setup.bash
 source /opt/px4_ros2/install/setup.bash
 
-WORLD_NAME="${PX4_GZ_WORLD:-drone_obstacle_world}"
-MODEL_NAME="${PX4_SIM_MODEL:-x500_mono_cam}_0"
+# Automatically discover active Gazebo camera topic
+echo "🔍 Discovering active Gazebo camera topic..."
+GZ_CAMERA_TOPIC=$(gz topic -l 2>/dev/null | grep -m 1 "camera/image$" || true)
+
+if [ -z "$GZ_CAMERA_TOPIC" ]; then
+    WORLD_NAME="${PX4_GZ_WORLD:-drone_obstacle_world}"
+    MODEL_NAME="x500_mono_cam_0"
+    GZ_CAMERA_TOPIC="/world/${WORLD_NAME}/model/${MODEL_NAME}/link/camera_link/sensor/camera/image"
+fi
 
 echo "======================================================================"
 echo "👁️ Starting Drone Onboard Camera Bridge & YOLOv8 Vision Perception"
-echo "📷 Bridging: /world/${WORLD_NAME}/model/${MODEL_NAME}/... -> /camera/image_raw"
+echo "📷 Bridging: ${GZ_CAMERA_TOPIC} -> /camera/image_raw"
 echo "🧠 Neural Network: Ultralytics YOLOv8 Nano Real-time Detector"
 echo "======================================================================"
 
 # Start ROS 2 Gazebo Parameter Bridge in background
-ros2 run ros_gz_bridge parameter_bridge "/world/${WORLD_NAME}/model/${MODEL_NAME}/link/camera_link/sensor/camera/image@sensor_msgs/msg/Image[gz.msgs.Image" --ros-args -r "/world/${WORLD_NAME}/model/${MODEL_NAME}/link/camera_link/sensor/camera/image:=/camera/image_raw" &
+ros2 run ros_gz_bridge parameter_bridge "${GZ_CAMERA_TOPIC}@sensor_msgs/msg/Image[gz.msgs.Image" --ros-args -r "${GZ_CAMERA_TOPIC}:=/camera/image_raw" &
 
 BRIDGE_PID=$!
 sleep 2
