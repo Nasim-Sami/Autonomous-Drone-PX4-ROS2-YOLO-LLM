@@ -73,7 +73,7 @@ flowchart TD
 
 To bridge ROS 2 East-North-Up (ENU) coordinates to PX4 North-East-Down (NED) coordinates without axis inversion:
 
-$$
+```math
 \begin{bmatrix}
 x \\
 y \\
@@ -96,19 +96,19 @@ y \\
 x \\
 -z
 \end{bmatrix}_{\text{ENU}}
-$$
+```
 
 #### 2. Direction Cosine Matrix from Unit Quaternion ($R(q) \in SO(3)$)
 
 To rotate vectors from the body frame to the world frame ($\mathbf{v}^W = R(q) \mathbf{v}^B$) with zero trigonometric calls and no gimbal lock:
 
-$$
+```math
 R(q) = \begin{bmatrix}
 1 - 2(y^2 + z^2) & 2(xy - zw) & 2(xz + yw) \\
 2(xy + zw) & 1 - 2(x^2 + z^2) & 2(yz - xw) \\
 2(xz - yw) & 2(yz + xw) & 1 - 2(x^2 + y^2)
 \end{bmatrix}
-$$
+```
 
 ---
 

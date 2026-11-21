@@ -130,7 +130,7 @@ The waves pass directly through each other without altering their respective wav
 
 Because a monocular sensor performs a projection from $\mathbb{R}^3 \to \mathbb{R}^2$, depth information along the ray is lost:
 
-$$
+```math
 \begin{bmatrix}
 u \\
 v
@@ -141,7 +141,7 @@ v
 X \\
 Y
 \end{bmatrix}
-$$
+```
 
 A small object close to the lens and a huge object far away project to identical pixel dimensions:
 
@@ -250,7 +250,7 @@ Autonomous drone software operates at the intersection of two distinct coordinat
 
 Sending ROS 2 setpoints directly to PX4 without transformation results in an inverted sign disaster: $+5\text{m}$ commanded in ENU would be interpreted by PX4 as driving 5 meters underground. The bridge applies the affine rotation matrix:
 
-$$
+```math
 \begin{bmatrix}
 x \\
 y \\
@@ -273,7 +273,7 @@ y \\
 x \\
 -z
 \end{bmatrix}_{\text{ENU}}
-$$
+```
 
 ---
 
@@ -304,29 +304,29 @@ The orientation of the drone relative to the world is traditionally parameterize
 
 Elementary rotation matrices:
 
-$$
+```math
 R_X(\phi) = \begin{bmatrix}
 1 & 0 & 0 \\
 0 & \cos\phi & \sin\phi \\
 0 & -\sin\phi & \cos\phi
 \end{bmatrix}
-$$
+```
 
-$$
+```math
 R_Y(\theta) = \begin{bmatrix}
 \cos\theta & 0 & -\sin\theta \\
 0 & 1 & 0 \\
 \sin\theta & 0 & \cos\theta
 \end{bmatrix}
-$$
+```
 
-$$
+```math
 R_Z(\psi) = \begin{bmatrix}
 \cos\psi & \sin\psi & 0 \\
 -\sin\psi & \cos\psi & 0 \\
 0 & 0 & 1
 \end{bmatrix}
-$$
+```
 
 ---
 
@@ -338,15 +338,15 @@ Drone IMU gyroscopes measure body angular velocity $\boldsymbol{\omega}_B = [p, 
 
 Total angular velocity in the body frame is the vector sum of intermediate rotations projected into the final frame:
 
-$$
+```math
 \boldsymbol{\omega}_B = \begin{bmatrix} \dot{\phi} \\ 0 \\ 0 \end{bmatrix} + R_X(\phi) \begin{bmatrix} 0 \\ \dot{\theta} \\ 0 \end{bmatrix} + R_X(\phi) R_Y(\theta) \begin{bmatrix} 0 \\ 0 \\ \dot{\psi} \end{bmatrix}
-$$
+```
 
 Evaluating each projection term:
 
-- **Term 1 (Pitch rate rotated through Roll):**
+#### Term 1: Pitch Rate Rotated Through Roll
 
-$$
+```math
 R_X(\phi) \begin{bmatrix} 0 \\ \dot{\theta} \\ 0 \end{bmatrix}
 =
 \begin{bmatrix}
@@ -365,11 +365,11 @@ R_X(\phi) \begin{bmatrix} 0 \\ \dot{\theta} \\ 0 \end{bmatrix}
 \dot{\theta} \cos\phi \\
 -\dot{\theta} \sin\phi
 \end{bmatrix}
-$$
+```
 
-- **Term 2 (Yaw rate rotated through Pitch):**
+#### Term 2: Yaw Rate Rotated Through Pitch
 
-$$
+```math
 R_Y(\theta) \begin{bmatrix} 0 \\ 0 \\ \dot{\psi} \end{bmatrix}
 =
 \begin{bmatrix}
@@ -388,11 +388,11 @@ R_Y(\theta) \begin{bmatrix} 0 \\ 0 \\ \dot{\psi} \end{bmatrix}
 0 \\
 \dot{\psi} \cos\theta
 \end{bmatrix}
-$$
+```
 
-- **Term 3 (Yaw rate rotated through Pitch and Roll):**
+#### Term 3: Yaw Rate Rotated Through Pitch and Roll
 
-$$
+```math
 R_X(\phi) \left( R_Y(\theta) \begin{bmatrix} 0 \\ 0 \\ \dot{\psi} \end{bmatrix} \right)
 =
 \begin{bmatrix}
@@ -411,11 +411,13 @@ R_X(\phi) \left( R_Y(\theta) \begin{bmatrix} 0 \\ 0 \\ \dot{\psi} \end{bmatrix} 
 \dot{\psi} \sin\phi \cos\theta \\
 \dot{\psi} \cos\phi \cos\theta
 \end{bmatrix}
-$$
+```
+
+#### Total Body Angular Velocity Vector:
 
 Summing all three component vectors yields the body angular velocity vector:
 
-$$
+```math
 \begin{bmatrix}
 p \\
 q \\
@@ -427,7 +429,7 @@ r
 \dot{\theta} \cos\phi + \dot{\psi} \sin\phi \cos\theta \\
 -\dot{\theta} \sin\phi + \dot{\psi} \cos\phi \cos\theta
 \end{bmatrix}
-$$
+```
 
 This yields two coupled equations for pitch rate $q$ and yaw rate $r$:
 
@@ -481,18 +483,21 @@ $$
 \lim_{\theta \to \pm 90^\circ} \cos\theta = 0 \implies \dot{\psi} = \frac{q \sin\phi + r \cos\phi}{0} \longrightarrow \pm \infty
 $$
 
-When the drone pitches vertical ($\theta = \pm 90^\circ$):
+When the drone pitches vertical ($\theta = \pm 90^\circ$), two catastrophic mathematical events occur:
 
-1. **Division by Zero:** Flight computers evaluating IEEE-754 floating-point arithmetic produce `NaN` (Not a Number) or `+Inf`, causing actuator control loops to saturate or crash.
-2. **Matrix Rank Collapse:** Multiplying the three rotation matrices with $\theta = 90^\circ$:
+**Event 1 — Division by Zero:**
+Flight computers evaluating IEEE-754 floating-point arithmetic produce `NaN` (Not a Number) or `+Inf`, causing actuator control loops to saturate or crash.
 
-$$
+**Event 2 — Matrix Rank Collapse:**
+Multiplying the three rotation matrices with $\theta = 90^\circ$:
+
+```math
 R(\phi, 90^\circ, \psi) = \begin{bmatrix}
 0 & \sin(\phi - \psi) & \cos(\phi - \psi) \\
 0 & \cos(\phi - \psi) & -\sin(\phi - \psi) \\
 -1 & 0 & 0
 \end{bmatrix}
-$$
+```
 
 The two independent parameters $\phi$ and $\psi$ collapse into a single degree of freedom $(\phi - \psi)$. The system loses one rotational dimension.
 
@@ -626,13 +631,13 @@ The point $(1, 0, 0)$ rotated $90^\circ$ around $Z$ lands precisely at $(0, 1, 0
 
 Evaluating $p' = q p q^*$ symbolically yields the direct matrix transformation $\mathbf{v}' = R(q) \mathbf{v}$:
 
-$$
+```math
 R(q) = \begin{bmatrix}
 1 - 2(y^2 + z^2) & 2(xy - zw) & 2(xz + yw) \\
 2(xy + zw) & 1 - 2(x^2 + z^2) & 2(yz - xw) \\
 2(xz - yw) & 2(yz + xw) & 1 - 2(x^2 + y^2)
 \end{bmatrix}
-$$
+```
 
 ### Continuous Kinematic Derivative (PX4 Core Loop):
 
